@@ -63,6 +63,61 @@ DispatchException(
 
 NTSTATUS
 NTAPI
+SetHotPatchRoutine(
+    __in PVOID * Routine,
+    __in PVOID HotPatchRoutine
+)
+{
+    NTSTATUS Status = STATUS_SUCCESS;
+    PCHAR CodeStart = NULL;
+    PCHAR NewRoutine = NULL;
+    PHOTPATCH HotPatch = NULL;
+
+    NewRoutine = *Routine;
+
+    CodeStart = CONTAINING_RECORD(
+        NewRoutine,
+        HOTPATCH,
+        JmpShort);
+
+    if (HOT_PATCH_SIGNATURE_LENGTH == RtlCompareMemory(
+        *Routine,
+        HOT_PATCH_SIGNATURE,
+        HOT_PATCH_SIGNATURE_LENGTH)) {
+        HotPatch = ExAllocatePool(
+            NonPagedPool,
+            sizeof(HOTPATCH));
+
+        if (NULL != HotPatch) {
+            RtlCopyMemory(
+                HotPatch,
+                HOT_PATCH,
+                HOT_PATCH_LENGTH);
+
+            HotPatch->u1.JumpAddress = PtrToLong(HotPatchRoutine) - PtrToLong(NewRoutine);
+
+            CopyStub(
+                CodeStart,
+                HotPatch,
+                HOT_PATCH_LENGTH);
+
+            *Routine = LongToPtr(PtrToLong(NewRoutine) + 2);
+
+            ExFreePool(HotPatch);
+        }
+        else {
+            Status = STATUS_NO_MEMORY;
+        }
+    }
+    else {
+        Status = STATUS_NOT_SUPPORTED;
+    }
+
+    return Status;
+}
+
+NTSTATUS
+NTAPI
 InitializeExcept(
     VOID
 )
