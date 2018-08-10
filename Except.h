@@ -70,6 +70,30 @@ extern "C" {
 
     C_ASSERT(FIELD_OFFSET(FUNCTION_TABLE_SPECIAL, TableEntry) == 0xc);
 
+#ifndef _WIN64
+#define HOT_PATCH_SIGNATURE "\x8b\xff"
+#define HOT_PATCH_SIGNATURE_LENGTH (sizeof(HOT_PATCH_SIGNATURE) - 1)
+
+#define HOT_PATCH "\xe9\xcc\xcc\xcc\xcc\xeb\xf9"
+#define HOT_PATCH_LENGTH (sizeof(HOT_PATCH) - 1)
+
+    typedef struct _HOTPATCH {
+#pragma pack(push, 1)
+        UCHAR Reserved1[1];
+        union {
+            UCHAR Reserved2[4];
+            LONG JumpAddress;
+        }u1;
+
+        UCHAR JmpShort[2]; // 
+#pragma pack(pop)
+    }HOTPATCH, *PHOTPATCH;
+
+    C_ASSERT(FIELD_OFFSET(HOTPATCH, u1.JumpAddress) == 1);
+    C_ASSERT(FIELD_OFFSET(HOTPATCH, JmpShort) == 5);
+    C_ASSERT(sizeof(HOTPATCH) == 7);
+#endif // !_WIN64
+
     ULONG
         NTAPI
         EncodeSystemPointer(
