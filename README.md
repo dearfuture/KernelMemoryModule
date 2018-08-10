@@ -1,3 +1,3 @@
 # KernelMemoryModule
 
-AMD64 ver need bypass PatchGuard.
+AMD64 kernel module need bypass PatchGuard.
